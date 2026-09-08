@@ -163,7 +163,8 @@ Revision-aware vector rules:
   and `input_b[0..1]` in little-endian byte order;
 - length `16` inputs use all four packed input words;
 - unused upper input words must be written as zero for length `8`;
-- `timeout` must be nonzero and within the driver-supported range.
+- `timeout` must be within the inclusive device timeout range: `125` ms through
+  `1000` ms.
 
 Milestone 4 must keep the same public API for Revision A and B. Revision B
 support must accept both length `8` and length `16`; requests for unsupported
@@ -237,7 +238,7 @@ Required `run-dot` input JSON shape:
 {
   "input_a": [1, 2, 3, 4, 5, 6, 7, 8],
   "input_b": [8, 7, 6, 5, 4, 3, 2, 1],
-  "timeout_ms": 100
+  "timeout_ms": 125
 }
 ```
 
@@ -245,7 +246,7 @@ Required `run-dot` input JSON shape:
 provide exactly 8 elements per input vector. Revision B input files may provide
 8 or 16 elements using the same field names. The CLI must reject mismatched
 vector lengths, values outside the signed INT8 range, missing fields, and
-nonpositive timeouts before issuing the HAL request.
+timeouts outside `125` through `1000` ms before issuing the HAL request.
 
 Suggested JSON shapes:
 

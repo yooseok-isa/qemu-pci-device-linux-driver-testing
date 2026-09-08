@@ -5,6 +5,10 @@
 
 #include "vnpu_uapi.h"
 
+#define FOR_REV \
+	for(int i=0 ; i<10; i++)
+
+
 int main(void)
 {
     int fd;
@@ -18,7 +22,8 @@ int main(void)
         perror("open");
         return 1;
     }
-	
+FOR_REV {
+
 	printf("start VNPU_IOCTL_GET_INFO\n");
     if (ioctl(fd, VNPU_IOCTL_GET_INFO, &info) < 0) {
         perror("GET_INFO EEROR: ");
@@ -28,14 +33,22 @@ int main(void)
     printf("abi=%u device_id=0x%x\n",
            info.abi_version, info.device_id);
 
+    /* req = (struct vnpu_dot_request) { */
+    /*     .abi_version = 1, */
+    /*     .vector_length = 8, */
+    /*     .timeout_ms = 255, */
+    /*     .input_a = { 0x04030201, 0x08070605, 0, 0 }, */
+    /*     .input_b = { 0x01010101, 0x01010101, 0, 0 }, */
+    /* }; */
+
     req = (struct vnpu_dot_request) {
         .abi_version = 1,
-        .job_id = 0,
-        .vector_length = 8,
-        .timeout_ms = 1000,
-        .input_a = { 0x04030201, 0x08070605, 0, 0 },
-        .input_b = { 0x01010101, 0x01010101, 0, 0 },
+        .vector_length = 16,
+        .timeout_ms = 255,
+        .input_a = { 0x04030201, 0x08070605, 0x04030201, 0x08070605 },
+        .input_b = { 0x01010101, 0x01010101, 0x01010101, 0x01010101 },
     };
+
 
 	printf("start VNPU_IOCTL_RUN_DOT\n");
     if (ioctl(fd, VNPU_IOCTL_RUN_DOT, &req) < 0) {
@@ -43,8 +56,8 @@ int main(void)
         return 1;
     }
 
-    printf("result=%d driver_status=%d device_error=%u\n",
-           req.result, req.driver_status, req.device_error);
+    printf("result=%d driver_status=%d device_error=%u job_id=%d\n",
+           req.result, req.driver_status, req.device_error, req.job_id);
 
 
 	printf("start VNPU_IOCTL_GET_STAT\n");
@@ -59,7 +72,7 @@ int main(void)
            (unsigned long long)stats.timed_out,
            (unsigned long long)stats.device_error,
            (unsigned long long)stats.resets);
-
+}
     close(fd);
     return 0;
 }

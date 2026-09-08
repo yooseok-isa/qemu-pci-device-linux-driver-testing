@@ -53,37 +53,37 @@ DotProductResult LinuxVnpuDevice::vnpu_run_dot(
 	std::chrono::milliseconds timeout)
 {
 	struct vnpu_dot_request dot_request = {};
-
+	
 	if (input_a.size() != input_b.size()) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"input_a and input_b length mismatch");
 	}
-	if (input_a.size() != 8) {
+	if (input_a.size() != 8 || input_a.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (input_b.size() != 8) {
+	if (input_b.size() != 8 || input_b.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (timeout.count() <= 0 || timeout.count() > 1000) {
+	if (timeout.count() <= 125 || timeout.count() > 1000) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"timeout must be positive and must be under 1000");
 	}
-
+	
 	pack_int8_input(input_a, dot_request.input_a);
 	pack_int8_input(input_b, dot_request.input_b);
 	dot_request.abi_version = 1;
 	dot_request.vector_length = static_cast<__u32>(input_a.size());
 	dot_request.timeout_ms = static_cast<__u32>(timeout.count());
-
+	
 	if (::ioctl(fd_, VNPU_IOCTL_RUN_DOT, &dot_request) < 0) {
 		if(errno == ETIMEDOUT) {
 			throw VnpuError(VnpuErrorType::device_error,
 					"Device time out",
 					errno);
 		}
-
+		
 		if(errno == EFAULT){
 			throw VnpuError(VnpuErrorType::system_error,
 					"failed to copy struct",
@@ -114,7 +114,7 @@ DotProductResult LinuxVnpuDevice::vnpu_run_dot(
 					errno);
 		}
 	}
-
+	
 	return DotProductResult {
 		.result = dot_request.result,
 		.device_error = static_cast<std::int32_t>(dot_request.device_error),
@@ -134,17 +134,17 @@ void LinuxVnpuDevice::vnpu_reset()
 void LinuxVnpuDevice::vnpu_set_fault(FaultType type)
 {
 	struct vnpu_fault_request fault = {};
-
+	
 	fault.abi_version = 1;
 	fault.fault_mask = static_cast<std::uint32_t>(type);
-
+	
 	if (::ioctl(fd_, VNPU_IOCTL_SET_FAULT, &fault) < 0) {
 		if(errno == EFAULT){
 				throw VnpuError(VnpuErrorType::system_error,
 						"failed to copy struct",
 						errno);
 		}
-	
+		
 		if(errno == EINVAL){
 				throw VnpuError(VnpuErrorType::validation_error,
 						"invalid fault mask: multi bit or invalid bit",
@@ -227,15 +227,15 @@ DotProductResult MockVnpuDevice::vnpu_run_dot(
 		throw VnpuError(VnpuErrorType::validation_error,
 				"input_a and input_b length mismatch");
 	}
-	if (input_a.size() != 8) {
+	if (input_a.size() != 8 || input_a.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (input_b.size() != 8) {
+	if (input_b.size() != 8 || input_b.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (timeout.count() <= 0 || timeout.count() > 1000) {
+	if (timeout.count() <= 125 || timeout.count() > 1000) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"timeout must be positive and must be under 1000");
 	}

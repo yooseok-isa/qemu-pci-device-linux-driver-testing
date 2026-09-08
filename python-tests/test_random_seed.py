@@ -19,6 +19,15 @@ def make_json_input_file():
         "timeout_ms" : rng.randint(0, 1000),
     } 
 
+def make_json_input_file_revB():
+    return {
+        "input_a" : [rng.randint(-128, 127) for _ in range(16)],
+        "input_b" : [rng.randint(-128, 127) for _ in range(16)],
+        "timeout_ms" : rng.randint(125, 1000),
+    } 
+
+
+
 def reset_device(run_vnpuctl):
     run_vnpuctl("reset", check=False)
 

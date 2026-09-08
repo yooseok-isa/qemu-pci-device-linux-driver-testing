@@ -22,6 +22,7 @@
 
 #define VNPU_REG_DEVICE_ID 0x000
 #define VNPU_REG_REVISION 0x004
+#define VNPU_REG_CAPABILITIES 0x008
 #define VNPU_REG_CONTROL 0x00C
 #define VNPU_REG_STATUS 0x010
 #define VNPU_REG_IRQ_STATUS 0x014
@@ -50,7 +51,6 @@ struct vnpu_device {
 	struct device *dev;
 
 	u32 abi_version;
-	u32 device_revision;
 
 	void __iomem *base;
 
@@ -64,6 +64,8 @@ struct vnpu_device {
 	struct miscdevice miscdev;
 
 	u64 job_id; //new field
+	u32 revision;
+	u32 capabilities;
 
 	u32 device_status;
 	bool error_flag;
@@ -217,7 +219,8 @@ static int vnpu_probe(struct pci_dev *pdev, const struct pci_device_id *id){
 		dev_err(&pdev->dev, "failed to register misc device: %d\n", ret);
 		return ret;
 	}
-	vnpu->device_revision = readl(vnpu->base + VNPU_REG_REVISION);
+	vnpu->revision = readl(vnpu->base + VNPU_REG_REVISION);
+	vnpu->capabilities = readl(vnpu->base + VNPU_REG_CAPABILITIES);
 	vnpu->device_error_num = 0;
 	vnpu->reset_num = 0;
 	vnpu->timed_out_num = 0;
@@ -281,6 +284,8 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 
 			info.abi_version = 1;
 			info.device_id = readl(vnpu->base + VNPU_REG_DEVICE_ID);
+			info.capabilities = vnpu->capabilities;
+			info.revision = vnpu->revision;
 			res = 0;
 			
 			if(copy_to_user((void __user *)arg, &info, sizeof(info)))
@@ -289,11 +294,13 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			break;
 		case VNPU_IOCTL_RUN_DOT:
 			struct vnpu_dot_request dot;
-			int vec_len = 0;
 			
 			if(copy_from_user(&dot, (void __user *)arg, sizeof(dot)))
 				return -EFAULT;
-	
+			
+			vnpu->job_id++;
+			dot.job_id = vnpu->job_id;
+
 			if(dot.abi_version != 1){
 				dev_err(vnpu->dev, "invalid revistion version\n");
 				dot.driver_status = DRIVER_STATUS_INV_REV;
@@ -301,14 +308,14 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			}
 
 			/* vec_len = readl(vnpu->base + VNPU_REG_VECTOR_LENGTH); */
-			if(vnpu->device_revision == 0x1){
+			if(vnpu->revision == 0x1){
 				if(dot.vector_length != 8){
 					dev_err(vnpu->dev, "invalid length\n");
 					dot.driver_status = DRIVER_STATUS_INV_LEN;
 					return -EINVAL;
 				}
 			}
-			else if(vnpu->device_revision == 0x2){
+			else if(vnpu->revision == 0x2){
 				if(!(dot.vector_length == 8 || dot.vector_length == 16)){
 					dev_err(vnpu->dev, "invalid length\n");
 					dot.driver_status = DRIVER_STATUS_INV_LEN;
@@ -330,13 +337,13 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			writel(VNPU_IRQ_ALL, vnpu->base + VNPU_REG_IRQ_STATUS);
 			writel(VNPU_IRQ_ALL, vnpu->base + VNPU_REG_IRQ_ENABLE);
 			
-			if(vec_len == 8){
+			if(dot.vector_length == 8){
 				for(int i=0; i<2; i++){
 					vnpu_set_input_a(vnpu->base, dot.input_a[i], i);
 					vnpu_set_input_b(vnpu->base, dot.input_b[i], i);
 				}
 			}
-			else if(vec_len == 16){
+			else if(dot.vector_length == 16){
 				for(int i=0; i<4; i++){
 					vnpu_set_input_a(vnpu->base, dot.input_a[i], i);
 					vnpu_set_input_b(vnpu->base, dot.input_b[i], i);
@@ -344,6 +351,7 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			}
 			else {
 				//invalid length
+				mutex_unlock(&vnpu->mutex);
 				dev_err(vnpu->dev, "invalid length");
 				dot.driver_status = DRIVER_STATUS_INV_LEN;
 				return -EINVAL;

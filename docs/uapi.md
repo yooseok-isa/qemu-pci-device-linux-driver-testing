@@ -33,6 +33,8 @@ The driver binds to the QEMU VNPU PCI device:
 - The driver must validate all userspace input before writing MMIO registers.
 - The driver must not expose raw MMIO access to userspace.
 - The driver must return bounded errors instead of waiting forever.
+- Device operation timeouts are valid from `125` ms through `1000` ms,
+  inclusive.
 
 ## Ioctl Commands
 
@@ -96,7 +98,7 @@ Used by `VNPU_IOCTL_RUN_DOT`.
 | `abi_version` | in | Must be `1` |
 | `job_id` | in | Reserved for Revision B; ignored for Revision A |
 | `vector_length` | in | Revision A supports `8` only; Revision B supports `8` and `16` |
-| `timeout_ms` | in | Maximum wait time for completion |
+| `timeout_ms` | in | Maximum wait time for completion; valid range is `125` through `1000` ms, inclusive |
 | `input_a` | in | Packed signed INT8 vector A words |
 | `input_b` | in | Packed signed INT8 vector B words |
 | `result` | out | Signed INT32 dot-product result |
@@ -112,6 +114,17 @@ elements `0..7`. For Revision B length `8`, the same lower two words are
 consumed and the upper input words are ignored. For Revision B length `16`, all
 four packed input words are consumed. Userspace should set unused upper words to
 zero for deterministic logs and future compatibility.
+
+### Device Timeout Range
+
+`timeout_ms` is the device operation timeout in milliseconds. Valid userspace
+requests must set:
+
+```text
+125 <= timeout_ms <= 1000
+```
+
+Values below `125` ms or above `1000` ms must be rejected as invalid arguments.
 
 ### `struct vnpu_fault_request`
 
@@ -222,7 +235,8 @@ Driver behavior:
 1. Copy `struct vnpu_dot_request` from userspace.
 2. Validate `abi_version`.
 3. Validate `vector_length` against the probed hardware revision.
-4. Validate `timeout_ms` is nonzero and within the driver maximum.
+4. Validate `timeout_ms` is within the inclusive `125` to `1000` ms device
+   timeout range.
 5. Acquire the device submission mutex.
 6. Clear stale completion state.
 7. Program packed input registers and `VECTOR_LENGTH`.

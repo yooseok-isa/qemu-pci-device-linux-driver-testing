@@ -26,8 +26,8 @@
 struct vnpu_info {
 	__u32 abi_version;
 	__u32 device_id;
-//	__u32 revision; // reserved
-//	__u32 capabilities; // reserved
+	__u32 revision;  
+	__u32 capabilities;  
 };
 
 struct vnpu_dot_request {

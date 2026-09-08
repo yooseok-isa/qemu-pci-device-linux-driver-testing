@@ -275,7 +275,8 @@ The Linux driver must:
 - require the documented Revision B capability bits when `REVISION == 2`;
 - validate `VECTOR_LENGTH` before starting an operation;
 - enable IRQs before writing `CONTROL_START`;
-- wait with a bounded timeout;
+- wait with a bounded device timeout from `125` ms through `1000` ms,
+  inclusive;
 - acknowledge `IRQ_STATUS` using RW1C semantics;
 - read `RESULT` only after successful completion;
 - read `ERROR_CODE` on failure;
