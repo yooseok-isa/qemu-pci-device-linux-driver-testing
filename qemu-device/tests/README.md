@@ -17,7 +17,7 @@ Requirements:
 Run:
 
 ```bash
-qemu-device/tests/scripts/vnpu-devmem-smoke.sh
+scripts/vnpu-devmem-smoke.sh
 ```
 
 The script finds PCI device `1b36:1000`, checks BAR0 size, reads reset

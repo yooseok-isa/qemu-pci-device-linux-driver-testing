@@ -7,7 +7,7 @@ BUILDROOT_DIR="${BUILDROOT_DIR:-$HOME/src/buildroot}"
 BUILDROOT_REPO="${BUILDROOT_REPO:-https://github.com/buildroot/buildroot.git}"
 BUILDROOT_COMMIT="${BUILDROOT_COMMIT:-71d1dddae12e7cbf322d96864d7757f459801f47}"
 DEFCONFIG_NAME="vnpu_qemu_x86_64_defconfig"
-QEMU_PATCH_NAME="0002-hw-misc-add-vnpu-pci-device.patch"
+QEMU_PATCH_NAME="0001-hw-misc-add-vnpu-pci-device.patch"
 
 usage() {
     cat <<EOF

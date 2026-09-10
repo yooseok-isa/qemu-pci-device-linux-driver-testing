@@ -14,22 +14,26 @@ jobs:
 
       - name: Check required files
         run: |
-          test -f CONTEXT.md
-          test -f PROJECT_STATUS.md
           test -f docs/versions.md
           test -f buildroot/configs/vnpu_qemu_x86_64_defconfig
           test -f qemu-device/patches/0001-hw-misc-add-vnpu-pci-device.patch
+          test -f qemu-device/patches/update-vnpu-patch.sh
           test -f qemu-device/tests/Makefile
-          test -f qemu-device/tests/scripts/vnpu-devmem-smoke.sh
           test -f qemu-device/tests/src/vnpu-mmio-smoke.c
           test -f scripts/setup-sources.sh
           test -f scripts/run-qemu.sh
+          test -f scripts/vnpu-devmem-smoke.sh
 
       - name: Shell syntax check
         run: |
           bash -n scripts/setup-sources.sh
           bash -n scripts/run-qemu.sh
-          bash -n qemu-device/tests/scripts/vnpu-devmem-smoke.sh
+          bash -n scripts/vnpu-devmem-smoke.sh
+          bash -n qemu-device/patches/update-vnpu-patch.sh
+
+      - name: QEMU patch sync check
+        run: |
+          qemu-device/patches/update-vnpu-patch.sh --check
 
       - name: Build host smoke tools
         run: |

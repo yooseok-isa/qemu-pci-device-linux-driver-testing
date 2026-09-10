@@ -114,8 +114,8 @@ static std::vector<std::int8_t> parse_int8_list(std::string_view text)
 		text.remove_prefix(comma + 1);
 	}
 
-	if (out.size() != 8) {
-		throw std::runtime_error("Revision A requires exactly 8 elements");
+	if (out.size() != 8 && out.size() != 16) {
+		throw std::runtime_error("Revision B requires 8 or 16 elements");
 	}
 	return out;
 }
@@ -190,8 +190,8 @@ static DotInput parse_run_dot_input_json(const std::string& path)
 	}
 
 	const int timeout_ms = parse_json_int(body, "timeout_ms");
-	if (timeout_ms <= 0) {
-		throw std::runtime_error("timeout_ms must be positive");
+	if (timeout_ms < 0) {
+		throw std::runtime_error("timeout_ms must be over 0");
 	}
 
 	input.timeout = std::chrono::milliseconds(timeout_ms);

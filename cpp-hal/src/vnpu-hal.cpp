@@ -42,8 +42,8 @@ DeviceInfo LinuxVnpuDevice::vnpu_get_info() const
 	return DeviceInfo {
 		.abi_version = info.abi_version,
 		.device_id = info.device_id,
-		.revision = 0,
-		.capabilities = 0,
+		.revision = info.revision,
+		.capabilities = info.capabilities
 	};
 }
 
@@ -58,15 +58,15 @@ DotProductResult LinuxVnpuDevice::vnpu_run_dot(
 		throw VnpuError(VnpuErrorType::validation_error,
 				"input_a and input_b length mismatch");
 	}
-	if (input_a.size() != 8 || input_a.size() != 16) {
+	if (input_a.size() != 8 && input_a.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (input_b.size() != 8 || input_b.size() != 16) {
+	if (input_b.size() != 8 && input_b.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (timeout.count() <= 125 || timeout.count() > 1000) {
+	if (timeout.count() < 125 || timeout.count() > 1000) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"timeout must be positive and must be under 1000");
 	}
@@ -103,11 +103,10 @@ DotProductResult LinuxVnpuDevice::vnpu_run_dot(
 			}
 			if(dot_request.driver_status == DRIVER_STATUS_INV_TIME){
 				throw VnpuError(VnpuErrorType::validation_error,
-						"invalide timeout count",
+						"invalid timeout count",
 						errno);
 			}
 		}
-		
 		if(errno == EIO){
 			throw VnpuError(VnpuErrorType::system_error,
 					"Device force error",
@@ -227,15 +226,15 @@ DotProductResult MockVnpuDevice::vnpu_run_dot(
 		throw VnpuError(VnpuErrorType::validation_error,
 				"input_a and input_b length mismatch");
 	}
-	if (input_a.size() != 8 || input_a.size() != 16) {
+	if (input_a.size() != 8 && input_a.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (input_b.size() != 8 || input_b.size() != 16) {
+	if (input_b.size() != 8 && input_b.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"Revision A requires vector length 8");
 	}
-	if (timeout.count() <= 125 || timeout.count() > 1000) {
+	if (timeout.count() < 125 || timeout.count() > 1000) {
 		throw VnpuError(VnpuErrorType::validation_error,
 				"timeout must be positive and must be under 1000");
 	}

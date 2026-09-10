@@ -16,7 +16,7 @@ class MockVnpuDeviceTest : public ::testing::Test{
 		MockVnpuDevice dev;
 		std::array<const std::int8_t, 8> input_a = {1,2,3,4,5,6,7,8};
 		std::array<const std::int8_t, 8> input_b = {8,7,6,5,4,3,2,1};
-		std::chrono::milliseconds time_out{100};
+		std::chrono::milliseconds time_out{255};
 		std::chrono::milliseconds over_time{1200};
 		
 		uint32_t gtest_run_dot(

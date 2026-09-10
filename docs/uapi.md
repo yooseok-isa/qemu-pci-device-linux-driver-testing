@@ -1,10 +1,10 @@
 # VNPU Userspace UAPI
 
-Status: planned specification, not implemented yet.
+Status: implemented UAPI contract under Revision B validation.
 
-This document defines the planned userspace ABI between the Linux VNPU driver
-and applications. The UAPI is implemented by the guest Linux kernel driver and
-is exposed through a character device.
+This document defines the userspace ABI between the Linux VNPU driver and
+applications. The UAPI is implemented by the guest Linux kernel driver and is
+exposed through a character device.
 
 ## Driver Identity
 
@@ -13,7 +13,7 @@ is exposed through a character device.
 | Kernel module | `vnpu_drv` |
 | Device node | `/dev/vnpu0` |
 | Class name | `vnpu` |
-| UAPI header | `driver/vnpu_uapi.h` until a final include layout is chosen |
+| UAPI header | `linux-driver/include/vnpu_uapi.h` |
 
 The driver binds to the QEMU VNPU PCI device:
 
@@ -38,20 +38,19 @@ The driver binds to the QEMU VNPU PCI device:
 
 ## Ioctl Commands
 
-The planned ioctl set is:
+The ioctl set is:
 
 ```c
 #define VNPU_IOCTL_GET_INFO   _IOR(VNPU_IOCTL_MAGIC, 0x00, struct vnpu_info)
 #define VNPU_IOCTL_RUN_DOT    _IOWR(VNPU_IOCTL_MAGIC, 0x01, struct vnpu_dot_request)
 #define VNPU_IOCTL_RESET      _IO(VNPU_IOCTL_MAGIC, 0x02)
 #define VNPU_IOCTL_SET_FAULT  _IOW(VNPU_IOCTL_MAGIC, 0x03, struct vnpu_fault_request)
-#define VNPU_IOCTL_GET_STATS  _IOR(VNPU_IOCTL_MAGIC, 0x04, struct vnpu_stats)
+#define VNPU_IOCTL_GET_STAT   _IOR(VNPU_IOCTL_MAGIC, 0x04, struct vnpu_status)
 ```
 
-The exact `VNPU_IOCTL_MAGIC` value will be selected in `driver/vnpu_uapi.h`
-before implementation. Once driver code exists, changing command numbers or
-structure layout requires a UAPI documentation update and ABI compatibility
-reasoning.
+The exact command numbers are defined in `linux-driver/include/vnpu_uapi.h`.
+Changing command numbers or structure layout requires a UAPI documentation
+update and ABI compatibility reasoning.
 
 ## Data Structures
 
@@ -61,8 +60,8 @@ reasoning.
 struct vnpu_info {
     __u32 abi_version;
     __u32 device_id;
-//    __u32 revision; // planned Revision B info field.
-//    __u32 capabilities; // planned feature bitmap, see docs/register_map.md.
+    __u32 revision;
+    __u32 capabilities;
 };
 ```
 
@@ -144,13 +143,14 @@ Used by `VNPU_IOCTL_SET_FAULT`.
 | 2 | `VNPU_FAULT_CORRUPT_RESULT` | Deterministically alter the result |
 | 3 | `VNPU_FAULT_FORCE_ERROR` | Complete with device error |
 
-The device model accepts only one active fault bit. If multiple bits are set,
-the lowest-numbered bit is selected by the device.
+The device model accepts only one active fault bit. If multiple bits are set in
+raw MMIO, the lowest-numbered bit is selected by the device. The driver UAPI
+rejects multi-bit masks before writing `FAULT_CONTROL`.
 
-Bits `4..31` are reserved. The current device masks them off, and userspace must
+Bits `4..31` are reserved. The driver UAPI rejects them, and userspace must
 write them as zero.
 
-### `struct vnpu_stats`
+### `struct vnpu_status`
 
 ```c
 struct vnpu_status {
@@ -158,19 +158,19 @@ struct vnpu_status {
     __u64 submitted;
     __u64 completed;
     __u64 timed_out;
-    __u64 device_errors;
+    __u64 device_error;
     __u64 resets;
 };
 ```
 
-Returned by `VNPU_IOCTL_GET_STATS`.
+Returned by `VNPU_IOCTL_GET_STAT`.
 
 | Field | Meaning |
 |---|---|
 | `submitted` | Number of accepted `RUN_DOT` submissions |
 | `completed` | Number of successful completions |
 | `timed_out` | Number of timeout paths |
-| `device_errors` | Number of device-reported failures |
+| `device_error` | Number of device-reported failures |
 | `resets` | Number of driver-initiated resets |
 
 ## Reserved Device Fields
@@ -197,17 +197,18 @@ decisions.
 ## Driver Status Values
 
 `driver_status` in `struct vnpu_dot_request` reports driver-level completion.
-The exact numeric values will be defined in `driver/vnpu_uapi.h`; the planned
-semantic set is:
+The numeric values are defined in `linux-driver/include/vnpu_uapi.h`:
 
 | Name | Meaning |
 |---|---|
-| `VNPU_STATUS_OK` | Operation completed and `result` is valid |
-| `VNPU_STATUS_TIMEOUT` | Completion did not arrive before `timeout_ms` |
-| `VNPU_STATUS_DEVICE_ERROR` | Device entered `STATUS_ERROR` |
-| `VNPU_STATUS_INVALID_ARGUMENT` | Userspace request failed validation |
-| `VNPU_STATUS_BUSY` | Another operation is already active |
-| `VNPU_STATUS_UNSUPPORTED` | Requested revision, length, or feature is unsupported |
+| `DRIVER_STATUS_OK` | Operation completed and `result` is valid |
+| `DRIVER_STATUS_TIMEOUT` | Completion did not arrive before `timeout_ms` |
+| `DRIVER_STATUS_DEVICE_ERROR` | Device entered `STATUS_ERROR` |
+| `DRIVER_STATUS_INV_REV` | Invalid ABI or unsupported revision |
+| `DRIVER_STATUS_INV_LEN` | Unsupported vector length |
+| `DRIVER_STATUS_INV_TIME` | Invalid timeout value |
+| `DRIVER_STATUS_INV_MULTIMASK` | Invalid multi-bit fault mask |
+| `DRIVER_STATUS_INV_BIT` | Invalid fault bit |
 
 Kernel syscall return values still use normal Linux error codes. For example,
 invalid userspace pointers return `-EFAULT`, bad ABI versions return `-EINVAL`,
@@ -270,20 +271,20 @@ Driver behavior:
 
 1. Copy `struct vnpu_fault_request` from userspace.
 2. Validate `abi_version`.
-3. Mask unsupported bits.
+3. Reject multi-bit masks and bits outside `0..3`.
 4. Write `FAULT_CONTROL`.
 
 This ioctl is test-only behavior and must not be used to imply production
 hardware behavior.
 
-## `VNPU_IOCTL_GET_STATS`
+## `VNPU_IOCTL_GET_STAT`
 
 Purpose: return driver-maintained counters for validation and debugging.
 
 Driver behavior:
 
 1. Snapshot counters safely.
-2. Copy `struct vnpu_stats` to userspace.
+2. Copy `struct vnpu_status` to userspace.
 
 Stats are diagnostic counters, not a stable performance interface.
 
@@ -305,9 +306,9 @@ The driver must:
 
 ## Compatibility Policy
 
-Before the first driver implementation, this document may be refined. After
-`driver/vnpu_uapi.h` and userspace tests exist, changes to ioctl numbers,
-structure layout, field meaning, or ABI version handling require:
+After `linux-driver/include/vnpu_uapi.h` and userspace tests exist, changes to
+ioctl numbers, structure layout, field meaning, or ABI version handling
+require:
 
 - an update to this document;
 - matching driver and userspace test changes;

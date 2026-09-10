@@ -1,6 +1,6 @@
 # VNPU HAL and CLI
 
-Status: Milestone 4 design specification.
+Status: implemented HAL/CLI contract under Revision B validation.
 
 This document defines the C++ hardware abstraction layer (HAL) contract for
 VNPU userspace software. The HAL sits above the Linux driver UAPI and hides raw
@@ -82,12 +82,12 @@ Required fields:
 |---|---|---|
 | `abi_version` | `std::uint32_t` | Linux UAPI ABI version, currently `1` |
 | `device_id` | `std::uint32_t` | VNPU MMIO device signature, expected `0x564E5055` |
-| `revision` | `std::uint32_t` | Hardware revision when exposed by the driver |
-| `capabilities` | `std::uint32_t` | Reserved feature bitmap; `0` is valid |
+| `revision` | `std::uint32_t` | Hardware revision reported by the driver |
+| `capabilities` | `std::uint32_t` | Feature bitmap reported by the driver; Revision A may report `0` |
 
-The current UAPI header exposes `abi_version` and `device_id` through
-`struct vnpu_info`. Until revision and capabilities are added to the UAPI, the
-HAL must not invent feature support from missing fields.
+The current UAPI header exposes `abi_version`, `device_id`, `revision`, and
+`capabilities` through `struct vnpu_info`. The HAL must return those fields
+without inventing feature support from missing or unsupported hardware bits.
 
 ### `DotProductResult`
 

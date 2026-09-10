@@ -304,6 +304,8 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			if(dot.abi_version != 1){
 				dev_err(vnpu->dev, "invalid revistion version\n");
 				dot.driver_status = DRIVER_STATUS_INV_REV;
+				if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))
+					return -EFAULT;
 				return -EINVAL;
 			}
 
@@ -312,6 +314,8 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 				if(dot.vector_length != 8){
 					dev_err(vnpu->dev, "invalid length\n");
 					dot.driver_status = DRIVER_STATUS_INV_LEN;
+					if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))
+						return -EFAULT;
 					return -EINVAL;
 				}
 			}
@@ -319,13 +323,16 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 				if(!(dot.vector_length == 8 || dot.vector_length == 16)){
 					dev_err(vnpu->dev, "invalid length\n");
 					dot.driver_status = DRIVER_STATUS_INV_LEN;
+					if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))
+						return -EFAULT;
 					return -EINVAL;
 				}
 			}
-			//revision b에서 255 ~ 1000 사이로 수정
-			if(dot.timeout_ms == 0 || dot.timeout_ms > 1000){
+			if(dot.timeout_ms < 125 || dot.timeout_ms > 1000){
 				dev_err(vnpu->dev, "invalid timeout ms");
 				dot.driver_status = DRIVER_STATUS_INV_TIME;
+				if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))
+					return -EFAULT;
 				return -EINVAL;
 			}
 			timeout = msecs_to_jiffies(dot.timeout_ms);
@@ -354,6 +361,8 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 				mutex_unlock(&vnpu->mutex);
 				dev_err(vnpu->dev, "invalid length");
 				dot.driver_status = DRIVER_STATUS_INV_LEN;
+				if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))
+					return -EFAULT;
 				return -EINVAL;
 			}
 
@@ -416,7 +425,7 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 
 			//invalid fault mask - invalid bit
 			if(fault.fault_mask & ~0x0Fu){
-				dev_err(vnpu->dev, "Invalid fault amsk - invalid bit\n");
+				dev_err(vnpu->dev, "Invalid fault mask - invalid bit\n");
 				return -EINVAL;
 			}
 				

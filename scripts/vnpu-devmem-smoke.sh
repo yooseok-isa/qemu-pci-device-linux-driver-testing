@@ -156,7 +156,7 @@ expect_read "$REG_DEVICE_ID" 0x564e5055 "DEVICE_ID"
 expect_read "$REG_REVISION" 0x2 "REVISION"
 expect_read "$REG_CAPABILITIES" 0x7D "CAPABILITIES"
 expect_read "$REG_STATUS" "$STATUS_IDLE" "STATUS after reset"
-expect_read "$REG_VECTOR_LENGTH" 0x8 "VECTOR_LENGTH after reset"
+expect_read "$REG_VECTOR_LENGTH" 0x10 "VECTOR_LENGTH after reset"
 
 run_dot_once 0x24 "dot8"
 

@@ -1,8 +1,9 @@
 # VNPU Register Map
 
-Status: planned specification, not implemented yet.
+Status: implemented Revision B contract under validation.
 
-This document defines the planned MMIO register contract between the QEMU virtual VNPU PCI device and the Linux driver.
+This document defines the MMIO register contract between the QEMU virtual VNPU
+PCI device and the Linux driver.
 
 ## PCI Device Identity
 
