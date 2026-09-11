@@ -14,8 +14,12 @@ REG_ERROR_CODE=0x01c
 REG_VECTOR_LENGTH=0x024
 REG_INPUT_A0=0x100
 REG_INPUT_A1=0x104
+REG_INPUT_A2=0x108
+REG_INPUT_A3=0x10c
 REG_INPUT_B0=0x120
 REG_INPUT_B1=0x124
+REG_INPUT_B2=0x128
+REG_INPUT_B3=0x12c
 REG_RESULT=0x140
 REG_FAULT_CONTROL=0x180
 
@@ -111,15 +115,20 @@ wait_done() {
 }
 
 run_dot_once() {
-    local expected="$1"
-    local label="$2"
+    local length="$1"
+    local expected="$2"
+    local label="$3"
     local result
 
-    mmio_write "$REG_VECTOR_LENGTH" 0x8
+    mmio_write "$REG_VECTOR_LENGTH" "$length"
     mmio_write "$REG_INPUT_A0" 0x04030201
     mmio_write "$REG_INPUT_A1" 0x08070605
+    mmio_write "$REG_INPUT_A2" 0x0c0b0a09
+    mmio_write "$REG_INPUT_A3" 0x100f0e0d
     mmio_write "$REG_INPUT_B0" 0x01010101
     mmio_write "$REG_INPUT_B1" 0x01010101
+    mmio_write "$REG_INPUT_B2" 0x01010101
+    mmio_write "$REG_INPUT_B3" 0x01010101
     mmio_write "$REG_CONTROL" "$CONTROL_START"
 
     wait_done
@@ -153,16 +162,31 @@ printf 'BAR0: 0x%x-0x%x (%u bytes)\n' "$BAR0_START" "$BAR0_END" "$BAR0_SIZE"
 mmio_write "$REG_CONTROL" "$CONTROL_RESET"
 
 expect_read "$REG_DEVICE_ID" 0x564e5055 "DEVICE_ID"
-expect_read "$REG_REVISION" 0x2 "REVISION"
-expect_read "$REG_CAPABILITIES" 0x7D "CAPABILITIES"
+REVISION="$(norm_hex "$(mmio_read "$REG_REVISION")")"
+case "$REVISION" in
+    0x1)
+        expect_read "$REG_CAPABILITIES" 0x7B "CAPABILITIES"
+        expect_read "$REG_VECTOR_LENGTH" 0x8 "VECTOR_LENGTH after reset"
+        ;;
+    0x2)
+        expect_read "$REG_CAPABILITIES" 0x7D "CAPABILITIES"
+        expect_read "$REG_VECTOR_LENGTH" 0x10 "VECTOR_LENGTH after reset"
+        ;;
+    *)
+        die "unsupported REVISION: $REVISION"
+        ;;
+esac
+echo "ok: REVISION = $REVISION"
 expect_read "$REG_STATUS" "$STATUS_IDLE" "STATUS after reset"
-expect_read "$REG_VECTOR_LENGTH" 0x10 "VECTOR_LENGTH after reset"
 
-run_dot_once 0x24 "dot8"
+run_dot_once 0x8 0x24 "dot8"
+if [ "$REVISION" = 0x2 ]; then
+    run_dot_once 0x10 0x88 "dot16"
+fi
 
 mmio_write "$REG_CONTROL" "$CONTROL_RESET"
 mmio_write "$REG_FAULT_CONTROL" "$FAULT_CORRUPT_RESULT"
-run_dot_once 0x25 "corrupt-result fault"
+run_dot_once 0x8 0x25 "corrupt-result fault"
 
 mmio_write "$REG_CONTROL" "$CONTROL_RESET"
 

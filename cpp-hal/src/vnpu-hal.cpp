@@ -60,11 +60,11 @@ DotProductResult LinuxVnpuDevice::vnpu_run_dot(
 	}
 	if (input_a.size() != 8 && input_a.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
-				"Revision A requires vector length 8");
+				"Revision A requires vector length 8 or 16");
 	}
 	if (input_b.size() != 8 && input_b.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
-				"Revision A requires vector length 8");
+				"Revision A requires vector length 8 or 16");
 	}
 	if (timeout.count() < 125 || timeout.count() > 1000) {
 		throw VnpuError(VnpuErrorType::validation_error,
@@ -212,8 +212,8 @@ DeviceInfo MockVnpuDevice::vnpu_get_info() const{
 	return DeviceInfo {
 		.abi_version = 1,
 		.device_id = 0x564E5055,
-		.revision = 0,
-		.capabilities = 0,
+		.revision = 2,
+		.capabilities = 0x7D,
 	};
 }
 
@@ -228,11 +228,11 @@ DotProductResult MockVnpuDevice::vnpu_run_dot(
 	}
 	if (input_a.size() != 8 && input_a.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
-				"Revision A requires vector length 8");
+				"Revision A requires vector length 8 or 16");
 	}
 	if (input_b.size() != 8 && input_b.size() != 16) {
 		throw VnpuError(VnpuErrorType::validation_error,
-				"Revision A requires vector length 8");
+				"Revision A requires vector length 8 or 16");
 	}
 	if (timeout.count() < 125 || timeout.count() > 1000) {
 		throw VnpuError(VnpuErrorType::validation_error,

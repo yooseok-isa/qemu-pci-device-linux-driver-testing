@@ -190,8 +190,8 @@ static DotInput parse_run_dot_input_json(const std::string& path)
 	}
 
 	const int timeout_ms = parse_json_int(body, "timeout_ms");
-	if (timeout_ms < 0) {
-		throw std::runtime_error("timeout_ms must be over 0");
+	if (timeout_ms < 125 || timeout_ms > 1000) {
+		throw std::runtime_error("timeout_ms must be 125~1000.");
 	}
 
 	input.timeout = std::chrono::milliseconds(timeout_ms);

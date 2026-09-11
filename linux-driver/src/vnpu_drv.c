@@ -28,6 +28,7 @@
 #define VNPU_REG_IRQ_STATUS 0x014
 #define VNPU_REG_IRQ_ENABLE 0x018
 #define VNPU_REG_ERROR_CODE 0x01C
+#define VNPU_REG_JOBID 0x020
 #define VNPU_REG_VECTOR_LENGTH 0x024
 #define VNPU_REG_INPUT_A_BASE 0x100
 #define VNPU_REG_INPUT_B_BASE 0x120
@@ -298,9 +299,6 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			if(copy_from_user(&dot, (void __user *)arg, sizeof(dot)))
 				return -EFAULT;
 			
-			vnpu->job_id++;
-			dot.job_id = vnpu->job_id;
-
 			if(dot.abi_version != 1){
 				dev_err(vnpu->dev, "invalid revistion version\n");
 				dot.driver_status = DRIVER_STATUS_INV_REV;
@@ -338,6 +336,8 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 			timeout = msecs_to_jiffies(dot.timeout_ms);
 
 			mutex_lock(&vnpu->mutex);
+			vnpu->job_id++;
+			writel(vnpu->job_id, vnpu->base + VNPU_REG_JOBID);
 			reinit_completion(&vnpu->irq_raised);
 
 			//CLEAR STATUS
@@ -393,7 +393,14 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 						return -EFAULT;
 					return res;
 			}
-
+			dot.job_id = readl(vnpu->base + VNPU_REG_JOBID);
+			if(vnpu->job_id != dot.job_id){
+				dev_err(vnpu->dev, "job_(d does not match. before submitted : %lld, after completed : %d", vnpu->job_id, dot.job_id);
+				if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))
+					return -EFAULT;
+				return -EFAULT;
+			}
+			
 			dot.result = readl(vnpu->base + VNPU_REG_RESULT);
 			dot.driver_status = DRIVER_STATUS_OK;
 			vnpu->completed_num += 1;

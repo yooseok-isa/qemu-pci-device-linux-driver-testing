@@ -14,14 +14,14 @@ namespace { // code anonymous
 class MockVnpuDeviceTest : public ::testing::Test{
 	protected:
 		MockVnpuDevice dev;
-		std::array<const std::int8_t, 8> input_a = {1,2,3,4,5,6,7,8};
-		std::array<const std::int8_t, 8> input_b = {8,7,6,5,4,3,2,1};
+		std::array<const std::int8_t, 16> input_a = {1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8};
+		std::array<const std::int8_t, 16> input_b = {8,7,6,5,4,3,2,1,8,7,6,5,4,3,2,1};
 		std::chrono::milliseconds time_out{255};
 		std::chrono::milliseconds over_time{1200};
 		
 		uint32_t gtest_run_dot(
-				std::array<const std::int8_t, 8> a, 
-				std::array<const std::int8_t, 8> b)
+				std::array<const std::int8_t, 16> a, 
+				std::array<const std::int8_t, 16> b)
 		{
 			uint32_t result = 0;
 			for(size_t i=0; i < a.size(); i++){
@@ -36,8 +36,8 @@ TEST_F(MockVnpuDeviceTest, ReturnDeviceInfo){
 
 	EXPECT_EQ(info.abi_version, 1u);
 	EXPECT_EQ(info.device_id, 0x564E5055u);
-	EXPECT_EQ(info.revision, 0u);
-	EXPECT_EQ(info.capabilities, 0u);
+	EXPECT_EQ(info.revision, 2u);
+	EXPECT_EQ(info.capabilities, 0x7D);
 }
 TEST_F(MockVnpuDeviceTest, RunDotProduct){
 	const DotProductResult result = dev.vnpu_run_dot(input_a, input_b, time_out); 

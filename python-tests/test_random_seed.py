@@ -78,13 +78,21 @@ def test_random_seed_run_revA(run_vnpuctl, json_data, case_num, gen_input_dir):
 
         if(data["status"] == "error"):
             if data["errno"] == errno.ETIMEDOUT:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             elif data["errno"] == errno.EFAULT:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             elif data["errno"] == errno.EINVAL:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             elif data["errno"] == errno.EIO:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             else :
                 debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
                 debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -133,13 +141,21 @@ def test_random_seed_run_revB(run_vnpuctl, json_data, case_num, gen_input_dir):
 
         if(data["status"] == "error"):
             if data["errno"] == errno.ETIMEDOUT:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             elif data["errno"] == errno.EFAULT:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             elif data["errno"] == errno.EINVAL:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             elif data["errno"] == errno.EIO:
-                pass
+                debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
+                debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                pytest.fail(f"error info : data.get('message')")
             else :
                 debug_file = DEBUG_DIR / f"debug_error_case_{case_num}.json"
                 debug_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
