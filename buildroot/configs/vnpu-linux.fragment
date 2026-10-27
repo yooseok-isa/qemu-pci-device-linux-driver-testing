@@ -1,0 +1,8 @@
+# Host repository sharing in the QEMU guest.
+CONFIG_NET=y
+CONFIG_INET=y
+CONFIG_NET_9P=y
+CONFIG_NET_9P_VIRTIO=y
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_9P_FS=y

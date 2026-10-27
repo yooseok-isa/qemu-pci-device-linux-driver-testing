@@ -182,7 +182,7 @@ static int vnpu_probe(struct pci_dev *pdev, const struct pci_device_id *id){
 		return -ENOMEM;
 	}
 	/*
-	 * device 용 BAR 확인 이후 값 저
+	 * device 용 BAR 확인 이후 값 저장
 	 */
 	vnpu->base = pcim_iomap(pdev, 0, 0);
 	if(!vnpu->base)
@@ -197,8 +197,6 @@ static int vnpu_probe(struct pci_dev *pdev, const struct pci_device_id *id){
 	ret = vnpu_hw_reset(vnpu);
 	if(ret)
 		return ret;
-
-
 	
 	ret = devm_request_irq(&pdev->dev, pdev->irq, vnpu_irq_handler, IRQF_SHARED, dev_name(&pdev->dev), vnpu);
 	if(ret) {
@@ -318,7 +316,7 @@ static long vnpu_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
 				}
 			}
 			else if(vnpu->revision == 0x2){
-				if(!(dot.vector_length == 8 || dot.vector_length == 16)){
+				if(dot.vector_length != 8 && dot.vector_length != 16){
 					dev_err(vnpu->dev, "invalid length\n");
 					dot.driver_status = DRIVER_STATUS_INV_LEN;
 					if(copy_to_user((void __user *)arg, &dot, sizeof(dot)))

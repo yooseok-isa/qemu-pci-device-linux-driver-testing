@@ -1,8 +1,7 @@
-output/
+/buildroot/output/
 
 # Generic build directories
 build/
-
 # C/C++ build outputs
 *.o
 *.a
@@ -13,7 +12,9 @@ build/
 CONTEXT.md
 CONTEXT_KO.md
 PROJECT_STATUS.md
-
+docs/MAJOR.md
+interview.md
+READ_CON.md
 # Linux Kbuild module outputs
 *.ko
 *.mod
@@ -27,7 +28,6 @@ artifacts/
 
 # cache directories
 python-tests/__pycache__/
-python-tests/inputs/
 .cache/
 # Project-built tools
 tools/vnpuctl

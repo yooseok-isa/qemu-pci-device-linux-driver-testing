@@ -3,8 +3,8 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 QEMU_BIN="${QEMU_BIN:-/home/isa_codex/src/buildroot/output/build/host-qemu-10.2.0/build/qemu-system-x86_64}"
-KERNEL_IMAGE="${KERNEL_IMAGE:-$REPO_ROOT/output/images/bzImage}"
-ROOTFS_IMAGE="${ROOTFS_IMAGE:-$REPO_ROOT/output/images/rootfs.ext4}"
+KERNEL_IMAGE="${KERNEL_IMAGE:-$REPO_ROOT/buildroot/output/images/bzImage}"
+ROOTFS_IMAGE="${ROOTFS_IMAGE:-$REPO_ROOT/buildroot/output/images/rootfs.ext4}"
 KERNEL_APPEND='console=ttyS0 root=/dev/vda rw panic=-1 init=/bin/sh -- -c "mkdir -p /mnt/repo; mount -t 9p -o trans=virtio repo /mnt/repo || echo WARNING: repo 9p mount failed; exec /sbin/init"'
 
 "$QEMU_BIN" \

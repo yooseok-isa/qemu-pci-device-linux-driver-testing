@@ -16,6 +16,7 @@ jobs:
         run: |
           test -f docs/versions.md
           test -f buildroot/configs/vnpu_qemu_x86_64_defconfig
+          test -f buildroot/configs/vnpu-linux.fragment
           test -f qemu-device/patches/0001-hw-misc-add-vnpu-pci-device.patch
           test -f qemu-device/patches/update-vnpu-patch.sh
           test -f qemu-device/tests/Makefile
@@ -34,6 +35,9 @@ jobs:
       - name: QEMU patch sync check
         run: |
           qemu-device/patches/update-vnpu-patch.sh --check
+
+      - name: Setup script tests
+        run: python3 scripts/tests/test_setup_sources.py
 
       - name: Build host smoke tools
         run: |
